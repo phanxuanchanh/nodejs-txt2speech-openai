@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .voice-select {
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #play-btn {
+            background-color: red !important;
+            width: 50% !important;
+            margin-left: 1px;
+            margin-right: 1px;
+        }
+
+        #save-btn {
+            background-color: blue !important;
+            width: 50% !important;
+            margin-left: 1px;
+            margin-right: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Chuyển Văn Bản Thành Giọng Nói</h1>
+        <textarea id="text" name="text" rows="5" placeholder="Nhập văn bản ở đây..."></textarea>
+
+        <div class="voice-select">
+            <label for="voice-select">Chọn giọng nói:</label>
+            <select id="voice-select" name="voice-select">
+                <option value="alloy">Alloy</option>
+                <option value="fable">Fable</option>
+                <option value="onyx">Onyx</option>
+                <option value="echo">Echo</option>
+                <option value="shimmer">Shimmer</option>
+                <option value="nova">Nova</option>
+                <!-- Các giọng nói khác có thể thêm vào đây -->
+            </select>
+        </div>
+
+        <button id="speak-btn">Chuyển Đổi Thành Giọng Nói</button>
+        <div style="margin-top: 10px; display: inline-flex; width: 100%;">
+            <button id="play-btn" style="display: none;">Phát Âm Thanh</button><br>
+            <button id="save-btn" style="display: none;">Lưu Âm Thanh</button>
+        </div>
+        <audio id="audio-player" controls style="display: none;"></audio>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById("audio-player");
+        const playButton = document.getElementById("play-btn");
+        const saveButton = document.getElementById("save-btn");
+        let audioUrl = null;
+
+        document.getElementById('speak-btn').addEventListener("click", async () => {
+            const text = document.getElementById('text').value;
+            const voiceSelect = document.getElementById('voice-select').value;
+
+            if (text.trim() === "") {
+                alert("Vui lòng nhập văn bản!");
+                return;
+            }
+
+            try {
+                const response = await fetch('/txt2speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 'text': text, 'voice-select': voiceSelect })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Lỗi khi chuyển văn bản thành giọng nói');
+                }
+
+                const audioBlob = await response.blob();
+                audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+
+                playButton.style.display = "inline-block";
+                saveButton.style.display = "inline-block";
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        playButton.addEventListener('click', () => {
+            audioPlayer.play();
+        });
+
+        
+        saveButton.addEventListener('click', () => {
+            let today = new Date();
+            let day = today.getDate();
+            let month = today.getMonth() + 1; 
+            let year = today.getFullYear();
+            let hours = today.getHours();  
+            let minutes = today.getMinutes();
+            let seconds = today.getSeconds();  
+
+            let a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = `${day}${month}${year}_${hours}${minutes}${seconds}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    </script>
+</body>
+
+</html>
